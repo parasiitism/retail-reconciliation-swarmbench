@@ -52,7 +52,7 @@ Reward: 1.0
 
 ```mermaid
 flowchart TD
-    A["Input Artifacts<br/>10 Store CSVs + Product Catalog"] --> B["Task Instruction<br/>Role-Neutral Prompt"]
+    A["Input Artifacts<br/>1M Store CSVs + Product Catalog"] --> B["Task Instruction<br/>Role-Neutral Prompt"]
 
     B --> C1["Worker 1<br/>Analyze atlanta.csv"]
     B --> C2["Worker 2<br/>Analyze boston.csv"]
