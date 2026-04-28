@@ -1,0 +1,122 @@
+coordination_pattern: map-reduce
+
+sub_tasks:
+  - id: inspect_catalog_and_schema
+    description: >
+      Inspect /input_artifacts/products.csv and the headers of all store CSVs.
+      Produce the catalog mapping, the complete set of store filenames, and the
+      column-name normalization table needed by the reducer. Do not compute the
+      final answer.
+    depends_on: []
+    parallel_group: map
+
+  - id: analyze_atlanta
+    description: >
+      Analyze /input_artifacts/stores/atlanta.csv only. Normalize its schema,
+      identify refunds and unmapped SKUs in that file, calculate store-level
+      candidate totals before cross-file duplicate removal, and list all
+      transaction IDs with row positions for duplicate reconciliation.
+    depends_on: []
+    parallel_group: map
+
+  - id: analyze_boston
+    description: >
+      Analyze /input_artifacts/stores/boston.csv only. Normalize its schema,
+      identify refunds and unmapped SKUs in that file, calculate store-level
+      candidate totals before cross-file duplicate removal, and list all
+      transaction IDs with row positions for duplicate reconciliation.
+    depends_on: []
+    parallel_group: map
+
+  - id: analyze_chicago
+    description: >
+      Analyze /input_artifacts/stores/chicago.csv only. Normalize its schema,
+      identify refunds and unmapped SKUs in that file, calculate store-level
+      candidate totals before cross-file duplicate removal, and list all
+      transaction IDs with row positions for duplicate reconciliation.
+    depends_on: []
+    parallel_group: map
+
+  - id: analyze_denver
+    description: >
+      Analyze /input_artifacts/stores/denver.csv only. Normalize its schema,
+      identify refunds and unmapped SKUs in that file, calculate store-level
+      candidate totals before cross-file duplicate removal, and list all
+      transaction IDs with row positions for duplicate reconciliation.
+    depends_on: []
+    parallel_group: map
+
+  - id: analyze_el_paso
+    description: >
+      Analyze /input_artifacts/stores/el_paso.csv only. Normalize its schema,
+      identify refunds and unmapped SKUs in that file, calculate store-level
+      candidate totals before cross-file duplicate removal, and list all
+      transaction IDs with row positions for duplicate reconciliation.
+    depends_on: []
+    parallel_group: map
+
+  - id: analyze_fresno
+    description: >
+      Analyze /input_artifacts/stores/fresno.csv only. Normalize its schema,
+      identify refunds and unmapped SKUs in that file, calculate store-level
+      candidate totals before cross-file duplicate removal, and list all
+      transaction IDs with row positions for duplicate reconciliation.
+    depends_on: []
+    parallel_group: map
+
+  - id: analyze_grand_rapids
+    description: >
+      Analyze /input_artifacts/stores/grand_rapids.csv only. Normalize its
+      schema, identify refunds and unmapped SKUs in that file, calculate
+      store-level candidate totals before cross-file duplicate removal, and
+      list all transaction IDs with row positions for duplicate reconciliation.
+    depends_on: []
+    parallel_group: map
+
+  - id: analyze_houston
+    description: >
+      Analyze /input_artifacts/stores/houston.csv only. Normalize its schema,
+      identify refunds and unmapped SKUs in that file, calculate store-level
+      candidate totals before cross-file duplicate removal, and list all
+      transaction IDs with row positions for duplicate reconciliation.
+    depends_on: []
+    parallel_group: map
+
+  - id: analyze_indianapolis
+    description: >
+      Analyze /input_artifacts/stores/indianapolis.csv only. Normalize its
+      schema, identify refunds and unmapped SKUs in that file, calculate
+      store-level candidate totals before cross-file duplicate removal, and
+      list all transaction IDs with row positions for duplicate reconciliation.
+    depends_on: []
+    parallel_group: map
+
+  - id: analyze_jackson
+    description: >
+      Analyze /input_artifacts/stores/jackson.csv only. Normalize its schema,
+      identify refunds and unmapped SKUs in that file, calculate store-level
+      candidate totals before cross-file duplicate removal, and list all
+      transaction IDs with row positions for duplicate reconciliation.
+    depends_on: []
+    parallel_group: map
+
+  - id: synthesize_reconciled_report
+    description: >
+      Read all map outputs, verify that every store file and every transaction
+      ID has been covered, remove duplicate transaction IDs by alphabetical
+      filename and row order, reconcile category totals using the catalog,
+      compute global totals, sort arrays, and write the final JSON report to
+      /logs/agent/output.json.
+    depends_on:
+      - inspect_catalog_and_schema
+      - analyze_atlanta
+      - analyze_boston
+      - analyze_chicago
+      - analyze_denver
+      - analyze_el_paso
+      - analyze_fresno
+      - analyze_grand_rapids
+      - analyze_houston
+      - analyze_indianapolis
+      - analyze_jackson
+    parallel_group: reduce

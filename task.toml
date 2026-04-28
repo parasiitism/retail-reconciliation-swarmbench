@@ -1,0 +1,25 @@
+[task]
+name = "swarmbench/retail-reconciliation-multistore-mapreduce"
+description = "Reconcile ten inconsistent retail transaction exports into one normalized JSON report, handling schema aliases, duplicate transaction IDs, refunds, unmapped SKUs, per-store summaries, category totals, and global totals."
+
+[metadata]
+verifier_type = "executable"
+domain = "data-analysis"
+coordination_pattern = "map-reduce"
+human_solving_hours_estimate = 7.0
+human_solving_hours_justification = "A human analyst would inspect ten CSV exports with inconsistent schemas, normalize aliases, identify duplicate transaction IDs, reconcile refund conventions, map SKUs to catalog categories, compute store-level and global metrics, and validate the final JSON. The data volume is modest, but the schema and reconciliation details make a careful manual solution take most of a working day."
+estimated_sub_agents = 11
+input_token_estimate = 45000
+reference_link = "https://archive.ics.uci.edu/"
+why_multi_agent = "The task has ten naturally independent store files with different schemas and edge cases. A single agent must preserve all schema mappings and reconciliation rules while processing every file sequentially, which creates coverage and attention pressure. A multi-agent system can assign one store file per worker, then use a reducer to verify coverage, duplicate handling, category reconciliation, and final totals."
+
+[agent]
+timeout_sec = 600
+
+[verifier]
+timeout_sec = 300
+
+[environment]
+cpus = 2
+memory_mb = 4096
+build_timeout_sec = 600
