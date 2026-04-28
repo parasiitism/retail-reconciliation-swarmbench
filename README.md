@@ -50,6 +50,26 @@ Mean reward: 1.000
 Reward: 1.0
 ```
 
-## Resume Summary
+```mermaid
+flowchart TD
+    A["Input Artifacts<br/>10 Store CSVs + Product Catalog"] --> B["Task Instruction<br/>Role-Neutral Prompt"]
 
-Built a Dockerized SwarmBench benchmark for evaluating multi-agent AI coordination on a realistic retail data reconciliation task. Designed heterogeneous CSV artifacts, map-reduce decomposition, deterministic partial-credit verifier, and oracle solution; validated with Harbor at reward `1.0`.
+    B --> C1["Worker 1<br/>Analyze atlanta.csv"]
+    B --> C2["Worker 2<br/>Analyze boston.csv"]
+    B --> C3["Worker 3<br/>Analyze chicago.csv"]
+    B --> C4["Worker N<br/>Analyze remaining store files"]
+    B --> C5["Schema Worker<br/>Inspect catalog + column aliases"]
+
+    C1 --> D["Reducer / Synthesizer"]
+    C2 --> D
+    C3 --> D
+    C4 --> D
+    C5 --> D
+
+    D --> E["Final Output<br/>/logs/agent/output.json"]
+
+    E --> F["Executable Verifier<br/>tests/verify.py"]
+
+    F --> G["Reward Score<br/>0.0 to 1.0"]
+
+```
