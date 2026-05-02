@@ -1,125 +1,86 @@
 # Multi-Agent Reconciliation Platform
 
-This repository is a learning-first scaffold for building a multi-agent reconciliation platform from scratch.
+This repository is a learning-first scaffold for building a scalable reconciliation platform for messy, multi-source business data.
 
-The goal is to build one platform that can reconcile messy, heterogeneous data across multiple domains:
+The product goal is to ingest inconsistent files or external sources, normalize records into canonical models, reconcile totals, detect duplicates, enrich with reference data, validate outputs, and produce audit-ready reports through an API.
 
-- Finance reconciliation
-- Payment settlement
-- Retail transaction reporting
-- Supply-chain data cleanup
-- Healthcare claims processing
-- Insurance document reconciliation
-- Enterprise ETL validation
-- AI agent benchmarking
-- Data quality automation
-- LLM evaluation infrastructure
+## Current Capabilities
 
-## Product Idea
+- CSV connector for retail transaction files
+- Schema alias mapping across heterogeneous CSV exports
+- Pydantic canonical transaction and report models
+- Single-source and multi-source reconciliation
+- Global duplicate transaction handling
+- Product catalog enrichment
+- Category totals
+- Unmapped SKU reporting
+- Audit events for duplicate and unmapped SKU decisions
+- Validation layer for report consistency
+- JSON report writer
+- FastAPI endpoints for demo jobs and report lookup
 
-Users upload multiple inconsistent files. The platform detects schemas, normalizes records into a canonical model, matches duplicates or related records, reconciles totals, validates the result, and produces a report with an audit trail.
+## Current API
+
+Run the backend:
+
+```powershell
+python -m uvicorn backend.app.main:app --reload --reload-dir backend --reload-dir sample_data
+```
+
+Open Swagger docs:
 
 ```text
-messy files
--> schema detection
--> normalization
--> matching
--> reduction
+http://127.0.0.1:8000/docs
+```
+
+Available endpoints:
+
+```text
+GET  /health
+POST /jobs/run-demo
+POST /jobs/demo
+GET  /jobs/{job_id}
+GET  /jobs/{job_id}/report
+GET  /reports/latest
+```
+
+## Architecture Direction
+
+```text
+multiple data sources
+-> connector layer
+-> schema mapping
+-> canonical records
+-> reconciliation core
+-> duplicate handling
+-> enrichment
 -> validation
--> report + audit trail
+-> audit trail
+-> report writer
+-> FastAPI backend
 ```
 
-## Important Learning Rule
+Future phases:
 
-Do not start with agents, LangGraph, FastAPI, Docker, or a frontend.
+- File upload API
+- PostgreSQL job and report persistence
+- Redis-backed background workers
+- Frontend dashboard
+- LangGraph orchestration
+- Additional connectors for Excel, APIs, databases, S3, Stripe, Shopify, and ERP exports
 
-Start with one small Python script that reads one CSV file and prints one total. Then add one concept at a time.
+## SwarmBench Benchmark
 
-## Recommended Build Order
-
-1. Plain Python CLI
-2. Canonical record model
-3. Domain profiles
-4. Multi-file reconciliation
-5. Verifier and scoring
-6. LangGraph orchestration
-7. FastAPI backend
-8. Job queue and database
-9. Frontend dashboard
-10. Docker and deployment
-
-## Repository Structure
+This repo also includes a retail reconciliation SwarmBench benchmark package in:
 
 ```text
-multi-agent-reconciliation-platform/
-|-- README.md
-|-- LEARNING_PATH.md
-|-- PROJECT_PLAN.md
-|-- .gitignore
-|-- docs/
-|   |-- architecture.md
-|   |-- domain_profiles.md
-|   |-- data_model.md
-|   |-- api_design.md
-|   |-- langgraph_design.md
-|   `-- scaling_plan.md
-|-- backend/
-|   |-- README.md
-|   |-- app/
-|   |   |-- api/
-|   |   |-- agents/
-|   |   |-- core/
-|   |   `-- services/
-|   `-- tests/
-|-- frontend/
-|   `-- README.md
-`-- sample_data/
-    |-- retail/
-    |-- finance/
-    |-- healthcare/
-    `-- supply_chain/
+retail-reconciliation-swarmbench/
 ```
 
-## First Thing To Build
+The benchmark contains ten heterogeneous retail CSV shards, product catalog data, oracle artifacts, a verifier, and a LangGraph map-reduce example.
 
-Start with `LEARNING_PATH.md`.
+The remote repository originally contained the benchmark package at the repository root. Those root-level benchmark files are preserved for compatibility while the broader platform code lives under `backend/`, `docs/`, `frontend/`, `sample_data/`, and `retail-reconciliation-swarmbench/`.
 
-Your first implementation task is intentionally tiny:
+## Resume Summary
 
-```text
-Read one retail CSV file and calculate gross sales.
-```
-
-Only after that works should you add:
-
-- product catalog lookup
-- refunds
-- multiple files
-- schema aliases
-- duplicate detection
-- JSON output
-- verifier
-- LangGraph
-
-## What This Project Should Become
-
-The final version should look like an AI infrastructure and backend system:
-
-```text
-FastAPI backend
-+ LangGraph multi-agent orchestration
-+ canonical data model
-+ domain profile engine
-+ reconciliation validator
-+ audit trail
-+ downloadable reports
-+ dashboard
-```
-
-## Resume Target
-
-When complete, this can become a strong AI Infra + Backend resume project:
-
-```text
-Built a multi-agent reconciliation platform using FastAPI, LangGraph, Docker, PostgreSQL, and Redis to normalize heterogeneous datasets across finance, retail, healthcare, and supply-chain domains; implemented schema-detection agents, parallel normalizer workers, reducer validation, audit trails, and downloadable reconciliation reports.
-```
+Built a scalable AI/backend reconciliation platform prototype using FastAPI and Pydantic to normalize heterogeneous retail data, detect duplicates, enrich transactions with product catalog data, validate totals, generate audit trails, and expose reconciliation jobs through API endpoints.

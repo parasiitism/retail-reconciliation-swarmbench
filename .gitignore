@@ -9,6 +9,8 @@ outputs/
 uploads/
 reports/
 report.json
+execution_logs/
+local_logs/
 node_modules/
 dist/
 build/

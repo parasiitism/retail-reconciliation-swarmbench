@@ -1,0 +1,11 @@
+transaction,date,item,qty_sold,price,category_hint,mode
+FRE-001,2026-01-03,SKU-1002,22,1.95,beverages,sale
+FRE-002,2026-01-04,SKU-3001,3,7.20,household,sale
+FRE-003,2026-01-04,SKU-4001,9,8.25,personal_care,sale
+FRE-004,2026-01-05,SKU-5001,1,89.99,electronics,sale
+FRE-005,2026-01-06,SKU-5001,1,89.99,electronics,return
+FRE-006,2026-01-06,SKU-2001,10,5.75,pantry,sale
+FRE-007,2026-01-07,SKU-2002,7,6.10,pantry,sale
+FRE-008,2026-01-08,SKU-4444,2,18.00,unknown,sale
+FRE-009,2026-01-09,SKU-3002,4,4.85,household,sale
+BOS-004,2026-01-10,SKU-5001,1,89.99,electronics,sale

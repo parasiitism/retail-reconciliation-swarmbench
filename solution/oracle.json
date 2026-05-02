@@ -1,0 +1,127 @@
+{
+  "category_net_revenue": {
+    "UNMAPPED": 239.0,
+    "beverages": 528.0,
+    "electronics": 1250.94,
+    "household": 597.65,
+    "pantry": 470.85,
+    "personal_care": 558.75
+  },
+  "duplicate_transaction_ids": [
+    "ATL-003",
+    "BOS-004",
+    "CHI-006",
+    "DEN-001"
+  ],
+  "global": {
+    "gross_sales": 3943.07,
+    "net_revenue": 3645.19,
+    "refunds": 297.88,
+    "store_count": 10,
+    "transaction_file_count": 10,
+    "units_sold": 553,
+    "unmapped_sku_count": 10
+  },
+  "stores": {
+    "atlanta": {
+      "gross_sales": 334.09,
+      "net_revenue": 323.34,
+      "refunds": 10.75,
+      "top_sku_by_net_revenue": "SKU-5001",
+      "units_sold": 41,
+      "unmapped_skus": [
+        "SKU-9999"
+      ]
+    },
+    "boston": {
+      "gross_sales": 275.09,
+      "net_revenue": 262.89,
+      "refunds": 12.2,
+      "top_sku_by_net_revenue": "SKU-5001",
+      "units_sold": 38,
+      "unmapped_skus": [
+        "SKU-7777"
+      ]
+    },
+    "chicago": {
+      "gross_sales": 395.1,
+      "net_revenue": 385.35,
+      "refunds": 9.75,
+      "top_sku_by_net_revenue": "SKU-5002",
+      "units_sold": 65,
+      "unmapped_skus": [
+        "SKU-8888"
+      ]
+    },
+    "denver": {
+      "gross_sales": 441.93,
+      "net_revenue": 430.43,
+      "refunds": 11.5,
+      "top_sku_by_net_revenue": "SKU-5001",
+      "units_sold": 53,
+      "unmapped_skus": [
+        "SKU-1234"
+      ]
+    },
+    "el_paso": {
+      "gross_sales": 409.3,
+      "net_revenue": 369.8,
+      "refunds": 39.5,
+      "top_sku_by_net_revenue": "SKU-4002",
+      "units_sold": 69,
+      "unmapped_skus": [
+        "SKU-3333"
+      ]
+    },
+    "fresno": {
+      "gross_sales": 384.34,
+      "net_revenue": 294.35,
+      "refunds": 89.99,
+      "top_sku_by_net_revenue": "SKU-4001",
+      "units_sold": 58,
+      "unmapped_skus": [
+        "SKU-4444"
+      ]
+    },
+    "grand_rapids": {
+      "gross_sales": 412.05,
+      "net_revenue": 394.8,
+      "refunds": 17.25,
+      "top_sku_by_net_revenue": "SKU-5002",
+      "units_sold": 63,
+      "unmapped_skus": [
+        "SKU-5555"
+      ]
+    },
+    "houston": {
+      "gross_sales": 521.34,
+      "net_revenue": 514.14,
+      "refunds": 7.2,
+      "top_sku_by_net_revenue": "SKU-5002",
+      "units_sold": 59,
+      "unmapped_skus": [
+        "SKU-6666"
+      ]
+    },
+    "indianapolis": {
+      "gross_sales": 465.48,
+      "net_revenue": 375.49,
+      "refunds": 89.99,
+      "top_sku_by_net_revenue": "SKU-5001",
+      "units_sold": 56,
+      "unmapped_skus": [
+        "SKU-9876"
+      ]
+    },
+    "jackson": {
+      "gross_sales": 304.35,
+      "net_revenue": 294.6,
+      "refunds": 9.75,
+      "top_sku_by_net_revenue": "SKU-5002",
+      "units_sold": 51,
+      "unmapped_skus": [
+        "SKU-2222"
+      ]
+    }
+  }
+}
