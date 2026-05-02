@@ -1,0 +1,35 @@
+benchmark: retail-reconciliation-swarmbench
+pattern: map_reduce
+private_plan: true
+objective: Reconcile ten heterogeneous retail transaction exports into one normalized report.
+workers:
+  - id: worker_atlanta
+    owns: environment/input_artifacts/atlanta.csv
+  - id: worker_boston
+    owns: environment/input_artifacts/boston.csv
+  - id: worker_chicago
+    owns: environment/input_artifacts/chicago.csv
+  - id: worker_denver
+    owns: environment/input_artifacts/denver.csv
+  - id: worker_el_paso
+    owns: environment/input_artifacts/el_paso.csv
+  - id: worker_fresno
+    owns: environment/input_artifacts/fresno.csv
+  - id: worker_grand_rapids
+    owns: environment/input_artifacts/grand_rapids.csv
+  - id: worker_houston
+    owns: environment/input_artifacts/houston.csv
+  - id: worker_indianapolis
+    owns: environment/input_artifacts/indianapolis.csv
+  - id: worker_jackson
+    owns: environment/input_artifacts/jackson.csv
+reducer:
+  id: reduce_and_reconcile
+  responsibilities:
+    - enforce store processing order
+    - remove later duplicate transaction IDs
+    - merge per-store metrics
+    - compute category totals
+    - compute global totals
+    - validate row and transaction coverage
+final_artifact: /workspace/report.json

@@ -1,0 +1,11 @@
+sku,product_name,category
+SKU-1001,Sparkling Water,beverages
+SKU-1002,Iced Tea,beverages
+SKU-2001,Pasta Sauce,pantry
+SKU-2002,Granola,pantry
+SKU-3001,Laundry Detergent,household
+SKU-3002,Paper Towels,household
+SKU-4001,Shampoo,personal_care
+SKU-4002,Toothpaste,personal_care
+SKU-5001,Bluetooth Speaker,electronics
+SKU-5002,Wireless Earbuds,electronics

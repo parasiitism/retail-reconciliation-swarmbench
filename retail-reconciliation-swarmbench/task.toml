@@ -1,0 +1,24 @@
+id = "retail-reconciliation-swarmbench"
+title = "Retail Reconciliation SwarmBench"
+description = "Reconcile ten heterogeneous retail transaction exports into one normalized JSON report."
+category = "data-analysis"
+difficulty = "medium"
+version = "1.0.0"
+
+[environment]
+dockerfile = "environment/Dockerfile"
+input_artifacts = "environment/input_artifacts"
+
+[tests]
+command = "bash /tests/test.sh"
+verifier = "tests/verify.py"
+oracle = "tests/oracle.json"
+
+[scoring]
+max_reward = 1.0
+partial_credit = true
+schema_normalization = 0.20
+duplicate_handling = 0.15
+per_store_metrics = 0.30
+category_totals = 0.15
+global_totals = 0.20

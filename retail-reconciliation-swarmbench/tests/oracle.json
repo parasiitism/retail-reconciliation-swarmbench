@@ -1,0 +1,238 @@
+{
+  "schema_version": "retail-reconciliation-v1",
+  "input_file_count": 10,
+  "processed_store_count": 10,
+  "store_order": [
+    "atlanta",
+    "boston",
+    "chicago",
+    "denver",
+    "el_paso",
+    "fresno",
+    "grand_rapids",
+    "houston",
+    "indianapolis",
+    "jackson"
+  ],
+  "duplicate_transaction_ids": [
+    "ATL-003",
+    "BOS-004",
+    "CHI-006",
+    "DEN-003"
+  ],
+  "unmapped_skus": [
+    "SKU-1234",
+    "SKU-2222",
+    "SKU-3333",
+    "SKU-4444",
+    "SKU-5555",
+    "SKU-6666",
+    "SKU-7777",
+    "SKU-8888",
+    "SKU-9876",
+    "SKU-9999"
+  ],
+  "stores": {
+    "atlanta": {
+      "raw_row_count": 10,
+      "deduped_transaction_count": 10,
+      "sale_count": 8,
+      "refund_count": 2,
+      "gross_sales": 334.09,
+      "refunds": 10.75,
+      "net_revenue": 323.34,
+      "units_sold": 41,
+      "units_refunded": 3,
+      "unmapped_skus": [
+        "SKU-9999"
+      ]
+    },
+    "boston": {
+      "raw_row_count": 10,
+      "deduped_transaction_count": 9,
+      "sale_count": 8,
+      "refund_count": 1,
+      "gross_sales": 275.09,
+      "refunds": 12.2,
+      "net_revenue": 262.89,
+      "units_sold": 38,
+      "units_refunded": 2,
+      "unmapped_skus": [
+        "SKU-7777"
+      ]
+    },
+    "chicago": {
+      "raw_row_count": 10,
+      "deduped_transaction_count": 10,
+      "sale_count": 9,
+      "refund_count": 1,
+      "gross_sales": 395.1,
+      "refunds": 9.75,
+      "net_revenue": 385.35,
+      "units_sold": 65,
+      "units_refunded": 1,
+      "unmapped_skus": [
+        "SKU-8888"
+      ]
+    },
+    "denver": {
+      "raw_row_count": 10,
+      "deduped_transaction_count": 10,
+      "sale_count": 9,
+      "refund_count": 1,
+      "gross_sales": 441.93,
+      "refunds": 11.5,
+      "net_revenue": 430.43,
+      "units_sold": 53,
+      "units_refunded": 2,
+      "unmapped_skus": [
+        "SKU-1234"
+      ]
+    },
+    "el_paso": {
+      "raw_row_count": 10,
+      "deduped_transaction_count": 10,
+      "sale_count": 9,
+      "refund_count": 1,
+      "gross_sales": 409.3,
+      "refunds": 39.5,
+      "net_revenue": 369.8,
+      "units_sold": 69,
+      "units_refunded": 1,
+      "unmapped_skus": [
+        "SKU-3333"
+      ]
+    },
+    "fresno": {
+      "raw_row_count": 10,
+      "deduped_transaction_count": 9,
+      "sale_count": 8,
+      "refund_count": 1,
+      "gross_sales": 384.34,
+      "refunds": 89.99,
+      "net_revenue": 294.35,
+      "units_sold": 58,
+      "units_refunded": 1,
+      "unmapped_skus": [
+        "SKU-4444"
+      ]
+    },
+    "grand_rapids": {
+      "raw_row_count": 10,
+      "deduped_transaction_count": 10,
+      "sale_count": 9,
+      "refund_count": 1,
+      "gross_sales": 412.05,
+      "refunds": 17.25,
+      "net_revenue": 394.8,
+      "units_sold": 63,
+      "units_refunded": 3,
+      "unmapped_skus": [
+        "SKU-5555"
+      ]
+    },
+    "houston": {
+      "raw_row_count": 10,
+      "deduped_transaction_count": 9,
+      "sale_count": 8,
+      "refund_count": 1,
+      "gross_sales": 521.34,
+      "refunds": 7.2,
+      "net_revenue": 514.14,
+      "units_sold": 59,
+      "units_refunded": 1,
+      "unmapped_skus": [
+        "SKU-6666"
+      ]
+    },
+    "indianapolis": {
+      "raw_row_count": 10,
+      "deduped_transaction_count": 10,
+      "sale_count": 9,
+      "refund_count": 1,
+      "gross_sales": 465.48,
+      "refunds": 89.99,
+      "net_revenue": 375.49,
+      "units_sold": 56,
+      "units_refunded": 1,
+      "unmapped_skus": [
+        "SKU-9876"
+      ]
+    },
+    "jackson": {
+      "raw_row_count": 10,
+      "deduped_transaction_count": 9,
+      "sale_count": 8,
+      "refund_count": 1,
+      "gross_sales": 367.95,
+      "refunds": 39.5,
+      "net_revenue": 328.45,
+      "units_sold": 62,
+      "units_refunded": 1,
+      "unmapped_skus": [
+        "SKU-2222"
+      ]
+    }
+  },
+  "categories": {
+    "beverages": {
+      "transaction_count": 20,
+      "gross_sales": 533.3,
+      "refunds": 5.0,
+      "net_revenue": 528.3,
+      "units_sold": 245,
+      "units_refunded": 2
+    },
+    "pantry": {
+      "transaction_count": 17,
+      "gross_sales": 519.65,
+      "refunds": 46.7,
+      "net_revenue": 472.95,
+      "units_sold": 88,
+      "units_refunded": 8
+    },
+    "household": {
+      "transaction_count": 18,
+      "gross_sales": 633.95,
+      "refunds": 7.2,
+      "net_revenue": 626.75,
+      "units_sold": 106,
+      "units_refunded": 1
+    },
+    "personal_care": {
+      "transaction_count": 14,
+      "gross_sales": 605.25,
+      "refunds": 9.75,
+      "net_revenue": 595.5,
+      "units_sold": 69,
+      "units_refunded": 1
+    },
+    "electronics": {
+      "transaction_count": 17,
+      "gross_sales": 1470.42,
+      "refunds": 258.98,
+      "net_revenue": 1211.44,
+      "units_sold": 27,
+      "units_refunded": 4
+    },
+    "unknown": {
+      "transaction_count": 10,
+      "gross_sales": 244.1,
+      "refunds": 0.0,
+      "net_revenue": 244.1,
+      "units_sold": 29,
+      "units_refunded": 0
+    }
+  },
+  "totals": {
+    "raw_row_count": 100,
+    "deduped_transaction_count": 96,
+    "sale_count": 85,
+    "refund_count": 11,
+    "gross_sales": 4006.67,
+    "refunds": 327.63,
+    "net_revenue": 3679.04,
+    "units_sold": 564,
+    "units_refunded": 16
+  }
+}
