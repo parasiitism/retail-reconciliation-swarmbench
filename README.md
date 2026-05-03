@@ -1,143 +1,105 @@
-# Multi-Agent Reconciliation Platform
+# RevRecon: Revenue Reconciliation Platform
 
-An AI-ready backend platform for reconciling messy business data from multiple sources.
+RevRecon is a full-stack reconciliation platform that turns inconsistent retail transaction exports into trusted, auditable revenue reports.
 
-The project ingests heterogeneous retail transaction exports, maps inconsistent schemas into canonical records, removes global duplicates, enriches transactions with product catalog data, validates totals, creates audit events, saves JSON reports, and exposes the workflow through FastAPI.
+It combines a FastAPI backend, deterministic reconciliation logic, SQLite job persistence, a React dashboard, and a packaged SwarmBench benchmark for evaluating decomposition-heavy reconciliation workflows.
 
-This is being built as a scalable foundation for future multi-source reconciliation across files, APIs, databases, cloud storage, ecommerce systems, ERPs, and payment platforms.
+![Revenue Reconciliation Dashboard](docs/assets/dashboard.png)
 
-## Why This Exists
+## Product Overview
 
-Business data rarely arrives clean.
+Retail and finance teams often receive transaction files from different stores, tools, and operational systems. Those files can use different column names, contain refunds in multiple formats, include duplicate transaction IDs, reference unknown SKUs, and produce totals that are hard to trust.
 
-One team may export CSVs from stores, another may pull data from Shopify, finance may reconcile Stripe or bank payouts, and operations may maintain product catalogs in spreadsheets. Column names differ, duplicates appear, refunds are represented inconsistently, and reference data is often incomplete.
+RevRecon addresses that problem with a clear reconciliation pipeline:
 
-This platform is designed to turn that messy operational data into a trusted reconciliation report with clear validation and auditability.
+```text
+CSV sources
+-> connector ingestion
+-> schema mapping
+-> canonical transaction models
+-> source-level reconciliation
+-> global duplicate handling
+-> catalog enrichment
+-> validation
+-> audit trail
+-> persisted reports
+-> dashboard review
+```
 
-## Current Status
+The financial calculation layer is deterministic and testable. Every important decision, including duplicate skips and unmapped SKUs, is represented in the generated report and surfaced in the dashboard.
 
-Implemented:
+## What The Platform Does
 
-- CSV connector for retail transaction files
-- Schema alias mapping for heterogeneous source columns
-- Pydantic canonical transaction and report models
-- Single-source reconciliation
-- Multi-source reconciliation
-- Global duplicate transaction handling
-- Product catalog enrichment
-- Category-level totals
-- Unmapped SKU detection
-- Audit events for duplicate and unmapped SKU decisions
-- Validation layer for report consistency
-- JSON report writer
-- FastAPI backend
-- In-memory reconciliation job tracking
-- Job-specific report lookup
-- Included SwarmBench benchmark package and LangGraph example
+- Upload and reconcile one or more CSV transaction files.
+- Normalize heterogeneous CSV headers into canonical transaction fields.
+- Classify sales and refunds, including negative-quantity refunds.
+- Calculate gross sales, refunds, net revenue, and transaction counts with Decimal precision.
+- Remove duplicate transaction IDs globally across uploaded sources.
+- Enrich transactions with product catalog categories.
+- Detect unmapped SKUs and create review items.
+- Generate category revenue summaries.
+- Validate report consistency before presenting results.
+- Persist reconciliation jobs in SQLite.
+- Save completed JSON report artifacts.
+- Expose job, report, upload, and dashboard APIs through FastAPI.
+- Present metrics, jobs, review queues, category revenue, audit events, and report details in a React dashboard.
 
-## Architecture Flow
+## Architecture
 
 ```mermaid
 flowchart TD
-    A["Multiple Data Sources"] --> A1["CSV / Excel Uploads"]
-    A --> A2["PostgreSQL / MySQL"]
-    A --> A3["REST APIs"]
-    A --> A4["S3 / Cloud Storage"]
-    A --> A5["Stripe / Shopify / ERP"]
-
-    A1 --> B["Connector Layer"]
-    A2 --> B
-    A3 --> B
-    A4 --> B
-    A5 --> B
-
-    B --> C["Raw Rows / Raw Events"]
-
-    C --> D["Schema Mapping Layer"]
-    D --> D1["Alias Mapping"]
-    D --> D2["Future AI Schema Suggestions"]
-
-    D1 --> E["Canonical Models"]
-    D2 --> E
-
-    E --> E1["CanonicalTransaction"]
-    E --> E2["ReconciliationReport"]
-    E --> E3["MultiSourceReconciliationReport"]
-
-    E1 --> F["Reconciliation Core"]
-    F --> F1["Normalize Transactions"]
-    F --> F2["Classify Sale / Refund"]
-    F --> F3["Calculate Amounts"]
-    F --> F4["Global Deduplication"]
-
-    F4 --> G["Enrichment Layer"]
-    G --> G1["Product Catalog"]
-    G --> G2["Category Mapping"]
-    G --> G3["Unmapped SKU Detection"]
-
-    G --> H["Validation Layer"]
-    H --> H1["Totals Validation"]
-    H --> H2["Duplicate Checks"]
-    H --> H3["Missing Field Checks"]
-    H --> H4["Data Quality Score"]
-
-    H --> I["Audit Trail"]
-    I --> I1["Original Row"]
-    I --> I2["Schema Mapping Used"]
-    I --> I3["Normalization Decision"]
-    I --> I4["Duplicate Decision"]
-
-    I --> J["Final Reports"]
-    J --> J1["JSON Report"]
-    J --> J2["Future CSV / Excel Export"]
-    J --> J3["Future Dashboard Summary"]
-
-    J --> K["FastAPI Backend"]
-    K --> K1["POST /jobs/demo"]
-    K --> K2["GET /jobs/{job_id}"]
-    K --> K3["GET /jobs/{job_id}/report"]
-    K --> K4["GET /reports/latest"]
-
-    K --> L["Future Database + Storage"]
-    L --> L1["PostgreSQL"]
-    L --> L2["Redis Queue"]
-    L --> L3["Object Storage"]
-
-    K --> M["Future Frontend Dashboard"]
-
-    N["Future LangGraph Multi-Agent Layer"] --> N1["Source Planner Agent"]
-    N --> N2["Schema Profiler Agent"]
-    N --> N3["Normalizer Worker Agents"]
-    N --> N4["Reducer Agent"]
-    N --> N5["Validator Agent"]
-    N --> N6["Anomaly Explainer Agent"]
-
-    N1 --> B
-    N2 --> D
-    N3 --> F
-    N4 --> F4
-    N5 --> H
-    N6 --> J
+    A["CSV Uploads / Retail Files"] --> B["Connector Layer"]
+    B --> C["Raw Rows"]
+    C --> D["Schema Mapping"]
+    D --> E["CanonicalTransaction"]
+    E --> F["Reconciliation Core"]
+    F --> F1["Sale / Refund Classification"]
+    F --> F2["Amount Calculation"]
+    F --> F3["Global Deduplication"]
+    F3 --> G["Product Catalog Enrichment"]
+    G --> H["Category Totals"]
+    G --> I["Unmapped SKU Detection"]
+    H --> J["Validation Layer"]
+    I --> J
+    J --> K["Audit Trail"]
+    K --> L["MultiSourceReconciliationReport"]
+    L --> M["JSON Report Artifact"]
+    L --> N["Dashboard Summary"]
+    M --> O["FastAPI Backend"]
+    N --> O
+    O --> P["SQLite Job Store"]
+    O --> Q["React Dashboard"]
 ```
 
-## Current Runtime Flow
+## Dashboard
 
-```text
-sample_data/retail/*.csv
-    -> CsvConnector
-    -> schema_mapping.get_value()
-    -> CanonicalTransaction
-    -> global duplicate removal
-    -> product catalog enrichment
-    -> category totals
-    -> unmapped SKU detection
-    -> audit events
-    -> validation checks
-    -> JSON report
-    -> FastAPI response
-```
+The dashboard is designed around operational review:
 
-## Project Structure
+- Revenue, validation, duplicate, and unmapped SKU metrics.
+- Pipeline visibility from source connection through final report.
+- Recent persisted jobs with status and timestamps.
+- Clickable completed jobs that open report details.
+- Source-level report table.
+- Category revenue breakdown.
+- Duplicate and unmapped SKU review signals.
+- Selected-job audit trail.
+- Direct JSON report access for technical inspection.
+
+## Backend API
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/health` | Service health check |
+| `POST` | `/jobs/demo` | Run a demo reconciliation job |
+| `POST` | `/jobs/run-demo` | Generate the latest demo report |
+| `POST` | `/jobs/upload-csv` | Upload one or more CSV files for reconciliation |
+| `GET` | `/jobs` | List persisted jobs |
+| `GET` | `/jobs/{job_id}` | Fetch job metadata |
+| `GET` | `/jobs/{job_id}/report` | Fetch a completed job report |
+| `GET` | `/dashboard/summary` | Fetch dashboard-ready metrics and review data |
+| `GET` | `/reports/latest` | Fetch the latest generated report artifact |
+
+## Repository Structure
 
 ```text
 multi-agent-reconciliation-platform/
@@ -145,11 +107,17 @@ multi-agent-reconciliation-platform/
 |   |-- app/
 |   |   |-- main.py
 |   |   |-- api/
+|   |   |   `-- main.py
 |   |   |-- connectors/
 |   |   |   |-- base.py
-|   |   |   `-- csv_connector.py
+|   |   |   |-- csv_connector.py
+|   |   |   |-- excelConnector.py
+|   |   |   |-- apiConnector.py
+|   |   |   |-- postgresConnector.py
+|   |   |   `-- s3Connector.py
 |   |   |-- core/
 |   |   |   |-- catalog.py
+|   |   |   |-- dashboard.py
 |   |   |   |-- job_store.py
 |   |   |   |-- models.py
 |   |   |   |-- reconciliation.py
@@ -158,19 +126,52 @@ multi-agent-reconciliation-platform/
 |   |   |   `-- validation.py
 |   |   `-- services/
 |   `-- tests/
+|       `-- test_api.py
 |-- docs/
+|   `-- assets/
+|       `-- dashboard.png
+|-- examples/
+|   `-- langgraph_reconcile.py
 |-- frontend/
+|   |-- index.html
+|   |-- package.json
+|   |-- vite.config.ts
+|   |-- tsconfig.json
+|   `-- src/
+|       |-- App.tsx
+|       |-- api.ts
+|       |-- main.tsx
+|       |-- styles.css
+|       |-- types.ts
+|       `-- vite-env.d.ts
 |-- sample_data/
 |   `-- retail/
 |       |-- atlanta.csv
 |       |-- boston.csv
+|       |-- chicago.csv
+|       |-- denver.csv
+|       |-- el_paso.csv
+|       |-- fresno.csv
+|       |-- grand_rapids.csv
+|       |-- houston.csv
+|       |-- indianapolis.csv
 |       `-- product_catalog.csv
 |-- retail-reconciliation-swarmbench/
 |-- requirements.txt
 `-- README.md
 ```
 
-## Setup
+Runtime artifacts are ignored by git:
+
+```text
+data/reconciliation.db
+outputs/reports/*.json
+uploads/*
+frontend/dist/
+frontend/node_modules/
+```
+
+## Backend Setup
 
 Create and activate a virtual environment:
 
@@ -179,128 +180,113 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-Install dependencies:
+Install Python dependencies:
 
 ```powershell
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
-Run the FastAPI server:
+Start the FastAPI backend:
 
 ```powershell
 python -m uvicorn backend.app.main:app --reload --reload-dir backend --reload-dir sample_data
 ```
 
-Open the API docs:
+Open API docs:
 
 ```text
 http://127.0.0.1:8000/docs
 ```
 
-## API Endpoints
+## Frontend Setup
 
-```text
-GET  /health
-POST /jobs/run-demo
-POST /jobs/demo
-GET  /jobs/{job_id}
-GET  /jobs/{job_id}/report
-GET  /reports/latest
+Install frontend dependencies:
+
+```powershell
+cd frontend
+npm install
 ```
 
-Recommended test flow:
+Start the React dashboard:
 
-1. Run `GET /health`
-2. Run `POST /jobs/demo`
-3. Copy the returned `job_id`
-4. Run `GET /jobs/{job_id}`
-5. Run `GET /jobs/{job_id}/report`
-
-Note: jobs are stored in memory for now. If the server restarts, previous job IDs disappear. PostgreSQL persistence is planned.
-
-## Example Output Highlights
-
-The current demo reconciles Atlanta and Boston retail transaction exports.
-
-The generated report includes:
-
-```text
-source_count
-raw_row_count
-transaction_count
-gross_sales
-refunds
-net_revenue
-duplicate_transaction_ids
-unmapped_skus
-audit_events
-category_totals
-source_reports
+```powershell
+npm run dev
 ```
 
-Example business signals:
+Open:
 
 ```text
-duplicate_transaction_ids: ["ATL-003"]
-unmapped_skus: ["SKU-7777", "SKU-9999"]
-validation.is_valid: true
+http://127.0.0.1:5173
 ```
 
-## Core Design Principles
+The Vite dev server proxies `/api/*` requests to the FastAPI backend.
 
-- Connectors fetch data.
-- Schema mapping interprets messy source columns.
-- Pydantic models define the canonical data shape.
-- Reconciliation logic performs deterministic calculations.
-- AI may assist with schema suggestions later, but financial math stays deterministic.
-- Validation checks whether reports can be trusted.
-- Audit events explain important decisions.
-- Reports are saved as artifacts that APIs and future dashboards can consume.
+## Testing
 
-## SwarmBench Benchmark
+Run backend tests:
 
-This repository also includes a retail reconciliation SwarmBench benchmark package:
+```powershell
+.\.venv\Scripts\python.exe -m pytest backend\tests
+```
+
+Expected result:
+
+```text
+6 passed
+```
+
+Build the frontend:
+
+```powershell
+cd frontend
+npm run build
+```
+
+## Core Domain Models
+
+The backend uses Pydantic models to keep messy external data separate from trusted internal records.
+
+Key models:
+
+- `CanonicalTransaction`
+- `ReconciliationReport`
+- `MultiSourceReconciliationReport`
+- `CategorySummary`
+- `AuditEvent`
+- `ValidationResult`
+- `ReconciliationJob`
+
+This structure keeps ingestion, normalization, reconciliation, validation, and reporting cleanly separated.
+
+## Reconciliation Rules
+
+RevRecon applies explicit rules that are easy to inspect and test:
+
+- A transaction is a refund when its quantity is negative or its transaction type matches refund terminology.
+- Transaction amounts are calculated from absolute quantity and unit price.
+- Money values are rounded to two decimal places using Decimal arithmetic.
+- Duplicate transaction IDs are skipped after the first accepted occurrence.
+- Source-level reports are calculated before global duplicate removal.
+- Global totals are calculated after duplicate removal.
+- SKUs missing from the product catalog are classified as `unknown`.
+- Duplicate and unmapped SKU decisions are written to the audit trail.
+
+## SwarmBench Package
+
+The repository includes a self-contained benchmark package:
 
 ```text
 retail-reconciliation-swarmbench/
 ```
 
-The benchmark contains:
+It contains heterogeneous retail CSV artifacts, a product catalog, oracle output, verifier scripts, scoring logic, Docker runtime configuration, and a LangGraph map-reduce example. The package demonstrates the same reconciliation domain as a deterministic assessment task.
 
-- Ten heterogeneous retail CSV artifacts
-- Product catalog data
-- Oracle report
-- Executable verifier
-- Partial scoring logic
-- Docker runtime configuration
-- LangGraph map-reduce example
+## Engineering Principles
 
-The benchmark demonstrates why this problem naturally fits a map-reduce and future multi-agent workflow: each source can be processed independently, while a reducer performs duplicate handling, validation, and final synthesis.
-
-## Roadmap
-
-Near-term:
-
-- Replace in-memory job storage with PostgreSQL
-- Add upload endpoints for user-provided CSV files
-- Add persistent report and audit metadata
-- Add automated tests for reconciliation, validation, and API routes
-- Add better error handling for missing columns and invalid source files
-
-Mid-term:
-
-- Add Excel connector
-- Add REST API connector
-- Add database connector
-- Add CSV and Excel report export
-- Add frontend dashboard for jobs, reports, validation, and audit events
-- Add user-reviewed schema mapping
-
-Long-term:
-
-- Add Redis-backed background workers
-- Add LangGraph orchestration
-- Add AI schema suggestion and anomaly explanation
-- Add source-specific integrations for Stripe, Shopify, QuickBooks, NetSuite, S3, and ERP exports
-- Add data quality scoring across sources
-- Add multi-tenant SaaS-ready architecture
+- Keep financial math deterministic.
+- Keep source connectors separate from reconciliation rules.
+- Normalize messy inputs into typed canonical models.
+- Persist job history and report artifacts.
+- Make validation and audit decisions visible.
+- Keep API routes thin and business logic inside core modules.
+- Use tests to protect reconciliation behavior.
