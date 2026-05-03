@@ -36,3 +36,11 @@ def update_job(job_id: str, **changes) -> ReconciliationJob:
 
 def get_job(job_id: str) -> ReconciliationJob | None:
     return JOBS.get(job_id)
+
+
+def list_jobs() -> list[ReconciliationJob]:
+    return sorted(
+        JOBS.values(),
+        key=lambda job: job.created_at,
+        reverse=True,
+    )

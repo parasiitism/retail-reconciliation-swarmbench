@@ -1,10 +1,13 @@
 import json
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.openapi.utils import get_openapi
 
 from backend.app.core.catalog import load_product_catalog
-from backend.app.core.job_store import create_job, get_job, update_job, utc_now
+from backend.app.core.dashboard import build_dashboard_summary
+from backend.app.core.job_store import create_job, get_job, list_jobs, update_job, utc_now
 from backend.app.core.reconciliation import reconcile_many_csvs
 from backend.app.core.report_writer import write_json_report
 from backend.app.core.validation import validate_report
@@ -23,9 +26,44 @@ def model_to_dict(model) -> dict:
     return json.loads(model.json())
 
 
+def custom_openapi() -> dict:
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        routes=app.routes,
+    )
+
+    upload_schema = openapi_schema["components"]["schemas"].get(
+        "Body_upload_csv_job_jobs_upload_csv_post"
+    )
+    if upload_schema:
+        upload_schema["properties"]["files"]["items"] = {
+            "type": "string",
+            "format": "binary",
+        }
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+def source_id_from_filename(filename: str, index: int) -> str:
+    source_id = Path(filename).stem.strip().lower()
+    source_id = source_id.replace(" ", "_").replace("-", "_")
+
+    return source_id or f"source_{index}"
+
+
 @app.get("/health")
 def health_check() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/dashboard/summary")
+def get_dashboard_summary() -> dict:
+    return build_dashboard_summary()
 
 
 @app.post("/jobs/run-demo")
@@ -103,6 +141,103 @@ def create_demo_job() -> dict:
         }
 
 
+@app.post("/jobs/upload-csv")
+async def upload_csv_job(
+    files: Annotated[
+        list[UploadFile],
+        File(description="One or more CSV files to reconcile"),
+    ],
+) -> dict:
+    if not files:
+        raise HTTPException(status_code=400, detail="At least one CSV file is required")
+
+    job = create_job()
+    job = update_job(job.job_id, status="running")
+
+    try:
+        upload_dir = PROJECT_ROOT / "uploads" / job.job_id
+        upload_dir.mkdir(parents=True, exist_ok=True)
+
+        source_paths: dict[str, Path] = {}
+
+        for index, uploaded_file in enumerate(files, start=1):
+            original_filename = uploaded_file.filename or f"source_{index}.csv"
+
+            if not original_filename.lower().endswith(".csv"):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Only CSV files are supported right now: {original_filename}",
+                )
+
+            safe_filename = Path(original_filename).name
+            saved_path = upload_dir / safe_filename
+
+            file_bytes = await uploaded_file.read()
+            saved_path.write_bytes(file_bytes)
+
+            source_id = source_id_from_filename(safe_filename, index)
+
+            if source_id in source_paths:
+                source_id = f"{source_id}_{index}"
+
+            source_paths[source_id] = saved_path
+
+        catalog_path = PROJECT_ROOT / "sample_data" / "retail" / "product_catalog.csv"
+        product_catalog = load_product_catalog(catalog_path)
+
+        report = reconcile_many_csvs(
+            source_paths=source_paths,
+            product_catalog=product_catalog,
+        )
+
+        validation_result = validate_report(report)
+
+        output_path = PROJECT_ROOT / "outputs" / "reports" / f"{job.job_id}_report.json"
+        saved_report_path = write_json_report(report, output_path)
+
+        job = update_job(
+            job.job_id,
+            status="completed",
+            report_path=str(saved_report_path),
+            completed_at=utc_now(),
+        )
+
+        return {
+            "job": model_to_dict(job),
+            "validation": model_to_dict(validation_result),
+            "uploaded_sources": list(source_paths.keys()),
+        }
+
+    except HTTPException as exc:
+        job = update_job(
+            job.job_id,
+            status="failed",
+            error_message=str(exc.detail),
+            completed_at=utc_now(),
+        )
+
+        raise exc
+
+    except Exception as exc:
+        job = update_job(
+            job.job_id,
+            status="failed",
+            error_message=str(exc),
+            completed_at=utc_now(),
+        )
+
+        return {
+            "job": model_to_dict(job),
+        }
+
+
+@app.get("/jobs")
+def get_jobs() -> dict:
+    return {
+        "jobs": [model_to_dict(job) for job in list_jobs()]
+    }
+
+
 @app.get("/jobs/{job_id}")
 def get_job_status(job_id: str) -> dict:
     job = get_job(job_id)
@@ -151,3 +286,6 @@ def get_latest_report() -> dict:
         "report_path": str(report_path),
         "report": json.loads(report_path.read_text(encoding="utf-8")),
     }
+
+
+app.openapi = custom_openapi
