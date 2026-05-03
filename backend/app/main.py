@@ -6,13 +6,12 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.openapi.utils import get_openapi
 
 from backend.app.core.catalog import load_product_catalog
+from backend.app.core.config import PRODUCT_CATALOG_PATH, REPORTS_DIR, SAMPLE_RETAIL_DIR, UPLOADS_DIR
 from backend.app.core.dashboard import build_dashboard_summary
 from backend.app.core.job_store import create_job, get_job, list_jobs, update_job, utc_now
 from backend.app.core.reconciliation import reconcile_many_csvs
 from backend.app.core.report_writer import write_json_report
 from backend.app.core.validation import validate_report
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 app = FastAPI(
     title="Multi-Agent Reconciliation Platform",
@@ -68,12 +67,11 @@ def get_dashboard_summary() -> dict:
 
 @app.post("/jobs/run-demo")
 def run_demo_job() -> dict:
-    catalog_path = PROJECT_ROOT / "sample_data" / "retail" / "product_catalog.csv"
-    product_catalog = load_product_catalog(catalog_path)
+    product_catalog = load_product_catalog(PRODUCT_CATALOG_PATH)
 
     source_paths = {
-        "atlanta": PROJECT_ROOT / "sample_data" / "retail" / "atlanta.csv",
-        "boston": PROJECT_ROOT / "sample_data" / "retail" / "boston.csv",
+        "atlanta": SAMPLE_RETAIL_DIR / "atlanta.csv",
+        "boston": SAMPLE_RETAIL_DIR / "boston.csv",
     }
 
     report = reconcile_many_csvs(
@@ -82,7 +80,7 @@ def run_demo_job() -> dict:
     )
     validation_result = validate_report(report)
 
-    output_path = PROJECT_ROOT / "outputs" / "reports" / "latest_report.json"
+    output_path = REPORTS_DIR / "latest_report.json"
     saved_path = write_json_report(report, output_path)
 
     return {
@@ -99,12 +97,11 @@ def create_demo_job() -> dict:
     job = update_job(job.job_id, status="running")
 
     try:
-        catalog_path = PROJECT_ROOT / "sample_data" / "retail" / "product_catalog.csv"
-        product_catalog = load_product_catalog(catalog_path)
+        product_catalog = load_product_catalog(PRODUCT_CATALOG_PATH)
 
         source_paths = {
-            "atlanta": PROJECT_ROOT / "sample_data" / "retail" / "atlanta.csv",
-            "boston": PROJECT_ROOT / "sample_data" / "retail" / "boston.csv",
+            "atlanta": SAMPLE_RETAIL_DIR / "atlanta.csv",
+            "boston": SAMPLE_RETAIL_DIR / "boston.csv",
         }
 
         report = reconcile_many_csvs(
@@ -113,7 +110,7 @@ def create_demo_job() -> dict:
         )
         validation_result = validate_report(report)
 
-        output_path = PROJECT_ROOT / "outputs" / "reports" / f"{job.job_id}_report.json"
+        output_path = REPORTS_DIR / f"{job.job_id}_report.json"
         saved_path = write_json_report(report, output_path)
 
         job = update_job(
@@ -155,7 +152,7 @@ async def upload_csv_job(
     job = update_job(job.job_id, status="running")
 
     try:
-        upload_dir = PROJECT_ROOT / "uploads" / job.job_id
+        upload_dir = UPLOADS_DIR / job.job_id
         upload_dir.mkdir(parents=True, exist_ok=True)
 
         source_paths: dict[str, Path] = {}
@@ -182,8 +179,7 @@ async def upload_csv_job(
 
             source_paths[source_id] = saved_path
 
-        catalog_path = PROJECT_ROOT / "sample_data" / "retail" / "product_catalog.csv"
-        product_catalog = load_product_catalog(catalog_path)
+        product_catalog = load_product_catalog(PRODUCT_CATALOG_PATH)
 
         report = reconcile_many_csvs(
             source_paths=source_paths,
@@ -192,7 +188,7 @@ async def upload_csv_job(
 
         validation_result = validate_report(report)
 
-        output_path = PROJECT_ROOT / "outputs" / "reports" / f"{job.job_id}_report.json"
+        output_path = REPORTS_DIR / f"{job.job_id}_report.json"
         saved_report_path = write_json_report(report, output_path)
 
         job = update_job(
@@ -273,7 +269,7 @@ def get_job_report(job_id: str) -> dict:
 
 @app.get("/reports/latest")
 def get_latest_report() -> dict:
-    report_path = PROJECT_ROOT / "outputs" / "reports" / "latest_report.json"
+    report_path = REPORTS_DIR / "latest_report.json"
 
     if not report_path.exists():
         return {

@@ -7,6 +7,7 @@ sys.path.append(str(PROJECT_ROOT))
 
 from backend.app.connectors.csv_connector import CsvConnector
 from backend.app.core.catalog import load_product_catalog
+from backend.app.core.config import PRODUCT_CATALOG_PATH, REPORTS_DIR, SAMPLE_RETAIL_DIR
 from backend.app.core.models import (
     AuditEvent,
     CanonicalTransaction,
@@ -202,7 +203,10 @@ def build_unmapped_sku_audit_events(
     return audit_events
 
 
-def reconcile_many_csvs(source_paths: dict[str, Path],product_catalog: dict[str, str] | None = None,) -> MultiSourceReconciliationReport:
+def reconcile_many_csvs(
+    source_paths: dict[str, Path],
+    product_catalog: dict[str, str] | None = None,
+) -> MultiSourceReconciliationReport:
     source_reports: dict[str, ReconciliationReport] = {}
     deduped_transactions: list[CanonicalTransaction] = []
     seen_transaction_ids: set[str] = set()
@@ -282,18 +286,17 @@ def report_to_json(report: ReconciliationReport | MultiSourceReconciliationRepor
 
 
 if __name__ == "__main__":
-    catalog_path = PROJECT_ROOT / "sample_data" / "retail" / "product_catalog.csv"
-    product_catalog = load_product_catalog(catalog_path)
+    product_catalog = load_product_catalog(PRODUCT_CATALOG_PATH)
 
     source_paths = {
-        "atlanta": PROJECT_ROOT / "sample_data" / "retail" / "atlanta.csv",
-        "boston": PROJECT_ROOT / "sample_data" / "retail" / "boston.csv",
+        "atlanta": SAMPLE_RETAIL_DIR / "atlanta.csv",
+        "boston": SAMPLE_RETAIL_DIR / "boston.csv",
     }
     report = reconcile_many_csvs(
         source_paths=source_paths,
         product_catalog=product_catalog,
     )
     print(report_to_json(report))
-    output_path = PROJECT_ROOT / "outputs" / "reports" / "latest_report.json"
+    output_path = REPORTS_DIR / "latest_report.json"
     saved_path = write_json_report(report=report, output_path=output_path)
     print(f"\nReport saved to: {saved_path}")

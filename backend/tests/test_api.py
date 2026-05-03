@@ -75,3 +75,25 @@ def test_created_job_can_be_loaded_from_store():
     assert stored_job.job_id == job_id
     assert stored_job.status == "completed"
     assert stored_job.report_path is not None
+
+
+def test_completed_job_report_can_be_fetched():
+    create_response = client.post("/jobs/demo")
+    create_payload = create_response.json()
+    job_id = create_payload["job"]["job_id"]
+
+    report_response = client.get(f"/jobs/{job_id}/report")
+    report_payload = report_response.json()
+
+    assert report_response.status_code == 200
+    assert report_payload["job"]["job_id"] == job_id
+    assert "report" in report_payload
+    assert "net_revenue" in report_payload["report"]
+    assert "source_reports" in report_payload["report"]
+
+
+def test_unknown_job_returns_404():
+    response = client.get("/jobs/not-a-real-job")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Job not found"

@@ -1,48 +1,25 @@
-import sqlite3
 from datetime import datetime, timezone
-from pathlib import Path
 from uuid import uuid4
 
+from sqlalchemy import select
+
+from backend.app.core.database import SessionLocal, init_database
+from backend.app.core.db_models import JobRecord
 from backend.app.core.models import ReconciliationJob
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DATA_DIR = PROJECT_ROOT / "data"
-DB_PATH = DATA_DIR / "reconciliation.db"
-
-
-def get_connection() -> sqlite3.Connection:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-
-    connection = sqlite3.connect(DB_PATH)
-    connection.row_factory = sqlite3.Row
-    return connection
-
-
 def init_job_store() -> None:
-    with get_connection() as connection:
-        connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS jobs (
-                job_id TEXT PRIMARY KEY,
-                status TEXT NOT NULL,
-                report_path TEXT,
-                error_message TEXT,
-                created_at TEXT NOT NULL,
-                completed_at TEXT
-            )
-            """
-        )
+    init_database()
 
 
-def row_to_job(row: sqlite3.Row) -> ReconciliationJob:
+def job_record_to_model(record: JobRecord) -> ReconciliationJob:
     return ReconciliationJob(
-        job_id=row["job_id"],
-        status=row["status"],
-        report_path=row["report_path"],
-        error_message=row["error_message"],
-        created_at=row["created_at"],
-        completed_at=row["completed_at"],
+        job_id=record.job_id,
+        status=record.status,
+        report_path=record.report_path,
+        error_message=record.error_message,
+        created_at=record.created_at,
+        completed_at=record.completed_at,
     )
 
 
@@ -59,23 +36,18 @@ def create_job() -> ReconciliationJob:
         created_at=utc_now(),
     )
 
-    with get_connection() as connection:
-        connection.execute(
-            """
-            INSERT INTO jobs (
-                job_id, status, report_path, error_message, created_at, completed_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            (
-                job.job_id,
-                job.status,
-                job.report_path,
-                job.error_message,
-                job.created_at,
-                job.completed_at,
-            ),
-        )
+    record = JobRecord(
+        job_id=job.job_id,
+        status=job.status,
+        report_path=job.report_path,
+        error_message=job.error_message,
+        created_at=job.created_at,
+        completed_at=job.completed_at,
+    )
+
+    with SessionLocal() as session:
+        session.add(record)
+        session.commit()
 
     return job
 
@@ -83,73 +55,50 @@ def create_job() -> ReconciliationJob:
 def update_job(job_id: str, **changes) -> ReconciliationJob:
     init_job_store()
 
-    current_job = get_job(job_id)
+    with SessionLocal() as session:
+        record = session.get(JobRecord, job_id)
 
-    if current_job is None:
-        raise KeyError(f"Job not found: {job_id}")
+        if record is None:
+            raise KeyError(f"Job not found: {job_id}")
 
-    updated_data = (
-        current_job.model_dump()
-        if hasattr(current_job, "model_dump")
-        else current_job.dict()
-    )
-    updated_data.update(changes)
-
-    updated_job = ReconciliationJob(**updated_data)
-
-    with get_connection() as connection:
-        connection.execute(
-            """
-            UPDATE jobs
-            SET status = ?,
-                report_path = ?,
-                error_message = ?,
-                created_at = ?,
-                completed_at = ?
-            WHERE job_id = ?
-            """,
-            (
-                updated_job.status,
-                updated_job.report_path,
-                updated_job.error_message,
-                updated_job.created_at,
-                updated_job.completed_at,
-                updated_job.job_id,
-            ),
+        current_job = job_record_to_model(record)
+        updated_data = (
+            current_job.model_dump()
+            if hasattr(current_job, "model_dump")
+            else current_job.dict()
         )
+        updated_data.update(changes)
 
-    return updated_job
+        updated_job = ReconciliationJob(**updated_data)
+
+        record.status = updated_job.status
+        record.report_path = updated_job.report_path
+        record.error_message = updated_job.error_message
+        record.created_at = updated_job.created_at
+        record.completed_at = updated_job.completed_at
+        session.commit()
+
+        return updated_job
 
 
 def get_job(job_id: str) -> ReconciliationJob | None:
     init_job_store()
 
-    with get_connection() as connection:
-        row = connection.execute(
-            """
-            SELECT job_id, status, report_path, error_message, created_at, completed_at
-            FROM jobs
-            WHERE job_id = ?
-            """,
-            (job_id,),
-        ).fetchone()
+    with SessionLocal() as session:
+        record = session.get(JobRecord, job_id)
 
-    if row is None:
-        return None
+        if record is None:
+            return None
 
-    return row_to_job(row)
+        return job_record_to_model(record)
 
 
 def list_jobs() -> list[ReconciliationJob]:
     init_job_store()
 
-    with get_connection() as connection:
-        rows = connection.execute(
-            """
-            SELECT job_id, status, report_path, error_message, created_at, completed_at
-            FROM jobs
-            ORDER BY created_at DESC
-            """
-        ).fetchall()
+    statement = select(JobRecord).order_by(JobRecord.created_at.desc())
 
-    return [row_to_job(row) for row in rows]
+    with SessionLocal() as session:
+        records = session.scalars(statement).all()
+
+    return [job_record_to_model(record) for record in records]
