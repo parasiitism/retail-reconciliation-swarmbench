@@ -1,12 +1,14 @@
 import json
 from pathlib import Path
 from typing import Annotated
+from uuid import uuid4
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.openapi.utils import get_openapi
 
 from backend.app.core.catalog import load_product_catalog
 from backend.app.core.config import PRODUCT_CATALOG_PATH, REPORTS_DIR, SAMPLE_RETAIL_DIR, UPLOADS_DIR
+from backend.app.core.csv_profiler import profile_csv
 from backend.app.core.dashboard import build_dashboard_summary
 from backend.app.core.job_store import create_job, get_job, list_jobs, update_job, utc_now
 from backend.app.core.reconciliation import reconcile_many_csvs
@@ -282,6 +284,33 @@ def get_latest_report() -> dict:
         "report_path": str(report_path),
         "report": json.loads(report_path.read_text(encoding="utf-8")),
     }
+
+
+@app.post("/schema/profile-csv")
+async def profile_csv_schema(
+    file: Annotated[
+        UploadFile,
+        File(description="CSV file to inspect before reconciliation"),
+    ],
+) -> dict:
+    original_filename = file.filename or "uploaded.csv"
+
+    if not original_filename.lower().endswith(".csv"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only CSV files are supported right now: {original_filename}",
+        )
+
+    profile_dir = UPLOADS_DIR / "_schema_profiles"
+    profile_dir.mkdir(parents=True, exist_ok=True)
+
+    safe_filename = Path(original_filename).name
+    saved_path = profile_dir / f"{uuid4()}_{safe_filename}"
+
+    file_bytes = await file.read()
+    saved_path.write_bytes(file_bytes)
+
+    return profile_csv(saved_path)
 
 
 app.openapi = custom_openapi
