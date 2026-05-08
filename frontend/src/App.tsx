@@ -173,6 +173,7 @@ function App() {
 
   return (
     <div className="app-shell">
+      <div className="ambient-grid" aria-hidden="true" />
       <Sidebar activeSection={activeSection} onNavigate={handleNavigate} />
 
       <main className="dashboard">
@@ -182,9 +183,18 @@ function App() {
             sectionRefs.current.overview = element;
           }}
         >
-          <div>
+          <div className="header-copy">
+            <span className="page-kicker">
+              <span className="live-dot" />
+              Operations Console
+            </span>
             <h1>Revenue Reconciliation Dashboard</h1>
             <p>Monitor reconciliation jobs, validation health, and review queues.</p>
+            <div className="header-meta">
+              <span>Schema registry</span>
+              <span>Bulk CSV ingestion</span>
+              <span>Audit-ready reports</span>
+            </div>
           </div>
 
           <div className="header-actions">
@@ -196,9 +206,15 @@ function App() {
               {actionLabel === "Running demo" ? <Loader2 className="spin" size={17} /> : <Activity size={17} />}
               Run Demo
             </button>
-            <button className="button primary" onClick={() => fileInputRef.current?.click()} disabled={isBusy}>
+            <button
+              aria-label="Bulk upload CSV files"
+              className="button primary"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isBusy}
+              title="Select one or more CSV files"
+            >
               {actionLabel === "Uploading CSVs" ? <Loader2 className="spin" size={17} /> : <Upload size={17} />}
-              Upload CSVs
+              Bulk Upload CSVs
             </button>
             <input
               ref={fileInputRef}

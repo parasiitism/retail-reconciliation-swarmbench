@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.openapi.utils import get_openapi
+from pydantic import BaseModel
 
 from backend.app.core.catalog import load_product_catalog
 from backend.app.core.config import PRODUCT_CATALOG_PATH, REPORTS_DIR, SAMPLE_RETAIL_DIR, UPLOADS_DIR
@@ -13,13 +14,21 @@ from backend.app.core.dashboard import build_dashboard_summary
 from backend.app.core.job_store import create_job, get_job, list_jobs, update_job, utc_now
 from backend.app.core.reconciliation import reconcile_many_csvs
 from backend.app.core.report_writer import write_json_report
+from backend.app.core.schema_registry import resolve_schema, register_schema_from_profile
 from backend.app.core.validation import validate_report
+
 
 app = FastAPI(
     title="Multi-Agent Reconciliation Platform",
     version="0.1.0",
 )
 
+
+class SchemaRegisterRequest(BaseModel):
+    profile: dict
+    schema_name: str
+    field_mapping: dict[str, str]
+    company_name: str | None = None
 
 def model_to_dict(model) -> dict:
     if hasattr(model, "model_dump_json"):
@@ -310,7 +319,35 @@ async def profile_csv_schema(
     file_bytes = await file.read()
     saved_path.write_bytes(file_bytes)
 
-    return profile_csv(saved_path)
+    profile = profile_csv(saved_path)
+    profile["filename"] = safe_filename
+    schema_resolution = resolve_schema(profile=profile)
+
+    return {
+        "profile": profile,
+        "schema_resolution": schema_resolution,
+    }
+
+
+@app.post("/schema/register")
+def register_csv_schema(payload: SchemaRegisterRequest) -> dict:
+    result = register_schema_from_profile(
+        profile=payload.profile,
+        schema_name=payload.schema_name,
+        field_mapping=payload.field_mapping,
+        company_name=payload.company_name,
+    )
+
+    if result["status"] == "invalid_mapping":
+        raise HTTPException(
+            status_code=400,
+            detail=result["mapping_validation"],
+        )
+
+    return {
+        "message": "Schema registered successfully.",
+        **result,
+    }
 
 
 app.openapi = custom_openapi

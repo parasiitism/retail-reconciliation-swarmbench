@@ -15,8 +15,8 @@ from backend.app.core.models import (
     MultiSourceReconciliationReport,
     ReconciliationReport,
 )
-from backend.app.core.schema_mapping import get_value
 from backend.app.core.report_writer import write_json_report
+from backend.app.core.schema_mapping import get_value
 
 REFUND_TYPES = {"refund", "return", "returned"}
 
@@ -29,22 +29,37 @@ def normalize_row(
     row: dict[str, str],
     source_id: str,
     product_catalog: dict[str, str] | None = None,
+    field_mapping: dict[str, str] | None = None,
 ) -> CanonicalTransaction:
     product_catalog = product_catalog or {}
 
-    quantity = int(get_value(row, "quantity"))
-    unit_price = Decimal(get_value(row, "unit_price"))
-    raw_type = get_value(row, "transaction_type").strip().lower()
-    sku = get_value(row, "sku")
+    quantity = int(get_value(row, "quantity", field_mapping=field_mapping))
+    unit_price = Decimal(get_value(row, "unit_price", field_mapping=field_mapping))
+    raw_type = get_value(
+        row,
+        "transaction_type",
+        field_mapping=field_mapping,
+        required=False,
+        default="",
+    ).strip().lower()
+    sku = get_value(row, "sku", field_mapping=field_mapping)
 
     transaction_type = "refund" if quantity < 0 or raw_type in REFUND_TYPES else "sale"
     amount = to_money(abs(Decimal(quantity)) * unit_price)
     category = product_catalog.get(sku, "unknown")
 
     return CanonicalTransaction(
-        transaction_id=get_value(row, "transaction_id"),
+        transaction_id=get_value(
+            row,
+            "transaction_id",
+            field_mapping=field_mapping,
+        ),
         source_id=source_id,
-        transaction_date=get_value(row, "transaction_date"),
+        transaction_date=get_value(
+            row,
+            "transaction_date",
+            field_mapping=field_mapping,
+        ),
         sku=sku,
         category=category,
         quantity=quantity,
@@ -83,15 +98,22 @@ def reconcile_transactions(
         net_revenue=to_money(gross_sales - refunds),
     )
 
+
 def load_transactions_from_csv(
     csv_path: Path,
     source_id: str,
     product_catalog: dict[str, str] | None = None,
+    field_mapping: dict[str, str] | None = None,
 ) -> tuple[int, list[CanonicalTransaction]]:
     connector = CsvConnector(csv_path)
     rows = connector.fetch_rows()
     transactions = [
-        normalize_row(row, source_id=source_id, product_catalog=product_catalog)
+        normalize_row(
+            row,
+            source_id=source_id,
+            product_catalog=product_catalog,
+            field_mapping=field_mapping,
+        )
         for row in rows
     ]
     return len(rows), transactions
@@ -101,11 +123,13 @@ def reconcile_csv(
     csv_path: Path,
     source_id: str,
     product_catalog: dict[str, str] | None = None,
+    field_mapping: dict[str, str] | None = None,
 ) -> ReconciliationReport:
     raw_row_count, transactions = load_transactions_from_csv(
         csv_path=csv_path,
         source_id=source_id,
         product_catalog=product_catalog,
+        field_mapping=field_mapping,
     )
 
     return reconcile_transactions(
@@ -206,7 +230,9 @@ def build_unmapped_sku_audit_events(
 def reconcile_many_csvs(
     source_paths: dict[str, Path],
     product_catalog: dict[str, str] | None = None,
+    source_field_mappings: dict[str, dict[str, str]] | None = None,
 ) -> MultiSourceReconciliationReport:
+    source_field_mappings = source_field_mappings or {}
     source_reports: dict[str, ReconciliationReport] = {}
     deduped_transactions: list[CanonicalTransaction] = []
     seen_transaction_ids: set[str] = set()
@@ -216,10 +242,12 @@ def reconcile_many_csvs(
     total_raw_row_count = 0
 
     for source_id, csv_path in source_paths.items():
+        field_mapping = source_field_mappings.get(source_id)
         raw_row_count, transactions = load_transactions_from_csv(
             csv_path=csv_path,
             source_id=source_id,
             product_catalog=product_catalog,
+            field_mapping=field_mapping,
         )
         total_raw_row_count += raw_row_count
 

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
+from backend.app.core.canonical_fields import validate_field_mapping
 
 SCHEMA_REGISTRY: dict[str, dict] = {}
 
@@ -55,4 +56,37 @@ def resolve_schema(profile: dict) -> dict:
         "match_confidence": 0.0,
         "schema": draft_schema,
         "message": "No exact schema fingerprint match found. Create a new schema.",
+    }
+
+
+def register_schema_from_profile(
+    profile: dict,
+    schema_name: str,
+    field_mapping: dict[str, str],
+    company_name: str | None = None,
+) -> dict:
+    mapping_validation = validate_field_mapping(
+        field_mapping=field_mapping,
+        csv_headers=profile["headers"],
+    )
+
+    if not mapping_validation["is_valid"]:
+        return {
+            "status": "invalid_mapping",
+            "mapping_validation": mapping_validation,
+        }
+
+    schema = create_schema_draft(profile=profile)
+    schema["schema_name"] = schema_name
+    schema["company_name"] = company_name
+    schema["field_mapping"] = field_mapping
+    schema["mapping_status"] = "mapped"
+    schema["status"] = "active"
+
+    registered_schema = register_schema(schema=schema)
+
+    return {
+        "status": "registered",
+        "schema": registered_schema,
+        "mapping_validation": mapping_validation,
     }

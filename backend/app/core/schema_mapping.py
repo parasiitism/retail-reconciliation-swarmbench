@@ -64,14 +64,63 @@ SCHEMA_ALIASES = {
 }
 
 
-def get_value(row: dict[str, str], canonical_field: str) -> str:
+def normalize_column_name(value: str) -> str:
+    return value.strip().lower()
+
+
+def get_value(
+    row: dict[str, str],
+    canonical_field: str,
+    field_mapping: dict[str, str] | None = None,
+    required: bool = True,
+    default: str = "",
+) -> str:
+    if field_mapping:
+        mapped_column = field_mapping.get(canonical_field)
+
+        if mapped_column:
+            if mapped_column in row:
+                return row[mapped_column]
+
+            normalized_row = {
+                normalize_column_name(column): value
+                for column, value in row.items()
+            }
+            normalized_mapped_column = normalize_column_name(mapped_column)
+
+            if normalized_mapped_column in normalized_row:
+                return normalized_row[normalized_mapped_column]
+
+            if required:
+                available_columns = ", ".join(row.keys())
+                raise KeyError(
+                    f"Mapped column '{mapped_column}' for '{canonical_field}' "
+                    f"was not found. Available columns: {available_columns}"
+                )
+
+            return default
+
     aliases = SCHEMA_ALIASES.get(canonical_field)
+
     if aliases is None:
         raise KeyError(f"Unknown canonical field: {canonical_field}")
 
     for alias in aliases:
         if alias in row:
             return row[alias]
+
+    normalized_row = {
+        normalize_column_name(column): value
+        for column, value in row.items()
+    }
+
+    for alias in aliases:
+        normalized_alias = normalize_column_name(alias)
+        if normalized_alias in normalized_row:
+            return normalized_row[normalized_alias]
+
+    if not required:
+        return default
 
     available_columns = ", ".join(row.keys())
     expected_columns = ", ".join(aliases)
