@@ -1,209 +1,71 @@
-# RevRecon: Revenue Reconciliation Platform
+# RevRecon - Retail Revenue Reconciliation Platform
 
-RevRecon is a full-stack revenue reconciliation platform I built to solve a practical data problem: retail transaction exports rarely arrive in one clean format.
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-FastAPI-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python FastAPI" />
+  <img src="https://img.shields.io/badge/Frontend-React%20%2B%20TypeScript-61DAFB?style=for-the-badge&logo=react&logoColor=111827" alt="React TypeScript" />
+  <img src="https://img.shields.io/badge/Data-Reconciliation-7C3AED?style=for-the-badge" alt="Reconciliation" />
+  <img src="https://img.shields.io/badge/Benchmark-SwarmBench-F97316?style=for-the-badge" alt="SwarmBench" />
+</p>
 
-Different stores and tools can send CSV files with different headers, duplicate transaction IDs, refunds, negative quantities, missing catalog mappings, and totals that are hard to trust. This project takes those messy files and turns them into one normalized, auditable reconciliation report.
+RevRecon is a full-stack retail reconciliation platform for turning messy sales exports into normalized, auditable reconciliation reports. It is built as a practical engineering project: file ingestion, schema profiling, field mapping, deterministic reconciliation, report generation, and a dashboard for reviewing results.
 
 ![Revenue Reconciliation Dashboard](docs/assets/dashboard.png)
 
+## Why This Project Exists
+
+Retail transaction data rarely arrives in one clean shape. Store exports can contain different headers, missing SKU mappings, duplicate transaction IDs, refunds, negative quantities, inconsistent totals, and file formats that change over time. RevRecon is designed to make that mess reviewable and repeatable.
+
 ## What I Built
 
-RevRecon currently includes:
-
 - FastAPI backend for reconciliation jobs and reports.
-- React + TypeScript dashboard for reviewing results.
-- Bulk CSV upload from the UI.
-- Schema profiling for uploaded CSV files.
-- Schema fingerprinting to recognize repeat file formats.
-- Schema registry with field-mapping validation.
+- React and TypeScript dashboard for uploading files and reviewing results.
+- CSV profiling and schema fingerprinting for repeat file formats.
+- Schema registry and field-mapping validation.
 - Canonical transaction models using Pydantic.
 - Deterministic reconciliation logic for sales, refunds, duplicates, SKUs, and totals.
-- SQLite job persistence through SQLAlchemy.
+- SQLite persistence through SQLAlchemy.
 - JSON report artifacts for completed jobs.
-- Tests that protect API behavior, schema onboarding, and mapped reconciliation.
-- A packaged SwarmBench benchmark task for retail reconciliation.
+- Tests for API behavior, schema onboarding, and mapped reconciliation.
+- SwarmBench task packaging for benchmark-style evaluation.
 
-## Why This Project Matters
-
-In real businesses, transaction data does not always come from one clean system.
-
-One company may send:
-
-```text
-transaction_id,date,sku,quantity,unit_price
-```
-
-Another company may send:
-
-```text
-Order No,Txn Date,Product Code,Qty Sold,Price
-```
-
-The important part is not forcing every company to rename their columns. The important part is learning how that company's schema maps into my internal canonical model.
-
-That is the core idea behind this project:
-
-```text
-Any client CSV
--> schema profile
--> schema fingerprint
--> saved field mapping
--> canonical transaction
--> reconciliation report
-```
-
-## Current Flow
+## Architecture
 
 ```mermaid
-flowchart TD
-    A["Bulk CSV Upload"] --> B["Connector Layer"]
-    B --> C["Raw CSV Rows"]
-    C --> D["Schema Profiling"]
-    D --> E["Schema Fingerprint"]
-    E --> F{"Exact Schema Match?"}
-    F -->|Yes| G["Use Saved Field Mapping"]
-    F -->|No| H["Create Schema Draft"]
-    H --> I["Register Field Mapping"]
-    I --> G
-    G --> J["CanonicalTransaction"]
-    J --> K["Reconciliation Core"]
-    K --> L["Duplicate Handling"]
-    K --> M["Refund Classification"]
-    K --> N["Catalog Enrichment"]
-    L --> O["Validation"]
-    M --> O
-    N --> O
-    O --> P["Audit Trail"]
-    P --> Q["JSON Report"]
-    Q --> R["Dashboard Summary"]
+flowchart LR
+    A[CSV Upload] --> B[Schema Profiler]
+    B --> C[Schema Fingerprint]
+    C --> D[Schema Registry]
+    D --> E[Canonical Mapper]
+    E --> F[Reconciliation Engine]
+    F --> G[Report Writer]
+    G --> H[Dashboard Review]
+    classDef input fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:2px
+    classDef process fill:#ede9fe,stroke:#7c3aed,color:#4c1d95,stroke-width:2px
+    classDef output fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:2px
+    class A input
+    class B,C,D,E,F process
+    class G,H output
 ```
 
-## Dashboard
-
-The dashboard is built for operational review. I can:
-
-- Run a demo reconciliation job.
-- Upload multiple CSV files in one action.
-- See net revenue, validation score, duplicates, and unmapped SKU count.
-- Review recent jobs and job status.
-- Open report details for completed jobs.
-- Inspect source-level totals.
-- Review category revenue.
-- Check duplicate and unmapped SKU signals.
-- Open raw JSON reports when needed.
-
-## Backend API
-
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `GET` | `/health` | Health check |
-| `POST` | `/jobs/demo` | Create and run a demo reconciliation job |
-| `POST` | `/jobs/run-demo` | Generate the latest demo report |
-| `POST` | `/jobs/upload-csv` | Upload one or more CSV files |
-| `GET` | `/jobs` | List persisted jobs |
-| `GET` | `/jobs/{job_id}` | Get one job |
-| `GET` | `/jobs/{job_id}/report` | Get a completed job report |
-| `GET` | `/dashboard/summary` | Get dashboard metrics and review data |
-| `GET` | `/reports/latest` | Get latest report artifact |
-| `POST` | `/schema/profile-csv` | Profile CSV headers and resolve schema match |
-| `POST` | `/schema/register` | Register a schema mapping from a CSV profile |
-
-## Repository Structure
+## Repository Map
 
 ```text
-multi-agent-reconciliation-platform/
-|-- backend/
-|   |-- app/
-|   |   |-- main.py
-|   |   |-- api/
-|   |   |-- connectors/
-|   |   |   |-- base.py
-|   |   |   |-- csv_connector.py
-|   |   |   |-- excelConnector.py
-|   |   |   |-- apiConnector.py
-|   |   |   |-- postgresConnector.py
-|   |   |   `-- s3Connector.py
-|   |   |-- core/
-|   |   |   |-- canonical_fields.py
-|   |   |   |-- catalog.py
-|   |   |   |-- config.py
-|   |   |   |-- csv_profiler.py
-|   |   |   |-- dashboard.py
-|   |   |   |-- database.py
-|   |   |   |-- db_models.py
-|   |   |   |-- job_store.py
-|   |   |   |-- models.py
-|   |   |   |-- reconciliation.py
-|   |   |   |-- report_writer.py
-|   |   |   |-- schema_fingerprint.py
-|   |   |   |-- schema_mapping.py
-|   |   |   |-- schema_registry.py
-|   |   |   `-- validation.py
-|   |   `-- services/
-|   `-- tests/
-|       `-- test_api.py
-|-- docs/
-|   `-- assets/
-|       `-- dashboard.png
-|-- examples/
-|   `-- langgraph_reconcile.py
-|-- frontend/
-|   |-- index.html
-|   |-- package.json
-|   |-- vite.config.ts
-|   |-- tsconfig.json
-|   `-- src/
-|       |-- App.tsx
-|       |-- api.ts
-|       |-- main.tsx
-|       |-- styles.css
-|       |-- types.ts
-|       `-- vite-env.d.ts
-|-- sample_data/
-|   |-- finance/
-|   |-- healthcare/
-|   `-- retail/
-|       |-- atlanta.csv
-|       |-- boston.csv
-|       |-- chicago.csv
-|       |-- denver.csv
-|       |-- el_paso.csv
-|       |-- fresno.csv
-|       |-- grand_rapids.csv
-|       |-- houston.csv
-|       |-- indianapolis.csv
-|       |-- jackson.csv
-|       `-- product_catalog.csv
-|-- retail-reconciliation-swarmbench/
-|-- requirements.txt
-`-- README.md
+backend/       FastAPI service, reconciliation core, connectors, report APIs
+frontend/      React and TypeScript dashboard
+docs/          Architecture notes and visual assets
+sample_data/   Example transaction files for local testing
+tests/         Backend and reconciliation test coverage
+solution/      Benchmark-oriented solution material
 ```
 
-## Backend Setup
-
-From the project root:
+## Run Locally
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
+uvicorn backend.app.main:app --reload
 ```
 
-Start the backend:
-
-```powershell
-.\.venv\Scripts\python.exe -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
-```
-
-Open the API docs:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-## Frontend Setup
-
-In another terminal:
+For the frontend:
 
 ```powershell
 cd frontend
@@ -211,108 +73,19 @@ npm install
 npm run dev
 ```
 
-Open:
+## Revision Notes
+
+- Think in terms of data normalization before reconciliation.
+- The schema registry prevents every new CSV format from becoming a new code path.
+- Canonical models make reconciliation deterministic and testable.
+- Fingerprinting helps recognize repeated vendor or store export formats.
+- Reports should be auditable, not just visually attractive.
+
+## Interview Talking Points
 
 ```text
-http://127.0.0.1:5173
+I built this as a data reconciliation workflow rather than a simple CSV parser.
+The important design decision is separating profiling, schema mapping, canonicalization,
+reconciliation, and report generation. That makes the system easier to test and extend
+when new store formats arrive.
 ```
-
-The frontend calls the backend through Vite's `/api` proxy.
-
-## How I Test It
-
-Run backend tests:
-
-```powershell
-.\.venv\Scripts\python.exe -m pytest backend\tests
-```
-
-Expected result:
-
-```text
-13 passed
-```
-
-Build the frontend:
-
-```powershell
-cd frontend
-npm run build
-```
-
-## Main Reconciliation Rules
-
-The backend follows explicit rules:
-
-- Refunds are detected from negative quantity or refund-like transaction type.
-- Amount is calculated from absolute quantity times unit price.
-- Money is handled with Decimal precision.
-- Source reports are calculated per file.
-- Duplicate transaction IDs are skipped globally after the first accepted transaction.
-- Product catalog enrichment adds categories.
-- Unknown SKUs are flagged for review.
-- Audit events are generated for duplicate skips and unmapped SKUs.
-- Final reports are validated before being shown in the dashboard.
-
-## Schema Registry Logic
-
-The schema registry is one of the most important parts of the project.
-
-When a CSV is uploaded for profiling:
-
-```text
-headers -> normalized headers -> ordered fingerprint -> unordered fingerprint
-```
-
-If the unordered fingerprint already exists, the system treats it as an exact schema match.
-
-If it does not exist, the CSV becomes a new schema draft. A field mapping can then be registered:
-
-```json
-{
-  "transaction_id": "Order No",
-  "transaction_date": "Txn Date",
-  "sku": "Product Code",
-  "quantity": "Qty Sold",
-  "unit_price": "Price"
-}
-```
-
-After that, files with the same schema can be reconciled through the saved mapping.
-
-## SwarmBench Benchmark
-
-This repository also includes a self-contained benchmark package:
-
-```text
-retail-reconciliation-swarmbench/
-```
-
-It includes heterogeneous retail CSV files, a product catalog, oracle artifacts, verifier scripts, a scoring setup, Docker runtime configuration, and a LangGraph map-reduce example for the same reconciliation domain.
-
-## Tech Stack
-
-- Python
-- FastAPI
-- Pydantic
-- SQLAlchemy
-- SQLite
-- React
-- TypeScript
-- Vite
-- Lucide React
-- Pytest
-
-## What I Focused On
-
-I focused on making the project understandable, testable, and close to a real product:
-
-- Clean backend core modules.
-- Thin API routes.
-- Typed canonical models.
-- Reusable connector pattern.
-- Deterministic financial calculations.
-- Schema onboarding instead of hardcoded headers.
-- Bulk CSV upload from the UI.
-- Dashboard-first review experience.
-- Tests for the important flows.
